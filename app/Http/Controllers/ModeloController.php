@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Modelo;
+use App\Repositories\ModeloRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,9 +16,23 @@ class ModeloController extends Controller
         $this->modelo = $modelo;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json($this->modelo->all(), 200);
+        $modeloRepository = new ModeloRepository($this->modelo);
+
+        if ($request->has('atributos_marca')) {
+            $atributos_marca = 'marca:id,' . $request->atributos_marca;
+            $modeloRepository->selectAtributosRegistrosRelacionados($atributos_marca);
+        } else
+            $modeloRepository->selectAtributosRegistrosRelacionados('marca');
+
+        if ($request->has('filtro'))
+            $modeloRepository->filtro($request->filtro);
+
+        if ($request->has('atributos'))
+            $modeloRepository->selectAtributos($request->atributos);
+
+        return response()->json($modeloRepository->getResultado(), 200);
     }
 
     public function store(Request $request)
@@ -42,7 +57,7 @@ class ModeloController extends Controller
 
     public function show($id)
     {
-        $modelo = $this->modelo->find($id);
+        $modelo = $this->modelo->with('marca')->find($id);
 
         if ($modelo === null) {
             return response()->json([
@@ -75,22 +90,17 @@ class ModeloController extends Controller
         } else
             $request->validate($modelo->rules());
 
-        if ($request->file('imagem')) {
+        if ($request->file('imagem'))
             Storage::disk('public')->delete($modelo->imagem);
-        }
+
 
         $imagem = $request->file('imagem');
         $imagem_urn = $imagem->store('imagens/modelos', 'public');
 
-        $modelo->update([
-            'marca_id' => $request->marca_id,
-            'nome' => $request->input('nome'),
-            'imagem' => $imagem_urn,
-            'numero_portas' => $request->numero_portas,
-            'lugares' => $request->lugares,
-            'air_bag' => $request->air_bag,
-            'abs' => $request->abs,
-        ]);
+        $modelo->fill($request->all());
+        $modelo->imagem = $imagem_urn;
+
+        $modelo->save();
 
         return response()->json($modelo, 200);
     }
@@ -108,6 +118,8 @@ class ModeloController extends Controller
 
         $modelo->delete();
 
-        return response()->json(['msg' => 'O modelo foi removido com sucesso!'], 200);
+        return response()->json([
+            'msg' => 'O modelo foi removido com sucesso!'
+        ], 200);
     }
 }

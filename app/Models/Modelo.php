@@ -23,4 +23,9 @@ class Modelo extends Model
             'abs' => 'required|boolean'
         ];
     }
+
+    public function marca()
+    {
+        return $this->belongsTo('App\Models\Marca');
+    }
 }

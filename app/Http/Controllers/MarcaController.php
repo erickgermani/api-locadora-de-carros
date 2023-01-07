@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Marca;
+use App\Repositories\MarcaRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,11 +16,23 @@ class MarcaController extends Controller
         $this->marca = $marca;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $marcas = $this->marca->all();
+        $marcaRepository = new MarcaRepository($this->marca);
 
-        return response()->json($marcas, 200);
+        if ($request->has('atributos_modelos')) {
+            $atributos_modelos = 'modelos:id,' . $request->atributos_modelos;
+            $marcaRepository->selectAtributosRegistrosRelacionados($atributos_modelos);
+        } else
+            $marcaRepository->selectAtributosRegistrosRelacionados('modelos');
+
+        if ($request->has('filtro'))
+            $marcaRepository->filtro($request->filtro);
+
+        if ($request->has('atributos'))
+            $marcaRepository->selectAtributos($request->atributos);
+
+        return response()->json($marcaRepository->getResultado(), 200);
     }
 
     public function store(Request $request)
@@ -39,13 +52,12 @@ class MarcaController extends Controller
 
     public function show($id)
     {
-        $marca = $this->marca->find($id);
+        $marca = $this->marca->with('modelos')->find($id);
 
-        if ($marca === null) {
+        if ($marca === null)
             return response()->json([
                 'erro' => 'Recurso pesquisado não existe'
             ], 404);
-        }
 
         return response()->json($marca, 200);
     }
@@ -54,9 +66,11 @@ class MarcaController extends Controller
     {
         $marca = $this->marca->find($id);
 
-        if ($marca === null) {
-            return response()->json(['erro' => 'Impossível realizar a atualização. O recurso solicitado não existe'], 404);
-        }
+        if ($marca === null)
+            return response()->json([
+                'erro' => 'Impossível realizar a atualização. O recurso solicitado não existe'
+            ], 404);
+
 
         if ($request->method() === 'PATCH') {
             $regrasDinamicas = [];
@@ -70,14 +84,17 @@ class MarcaController extends Controller
         } else
             $request->validate($marca->rules(), $marca->feedback());
 
-        if ($request->file('imagem')) {
+        if ($request->file('imagem'))
             Storage::disk('public')->delete($marca->imagem);
-        }
+
 
         $imagem = $request->file('imagem');
         $imagem_urn = $imagem->store('imagens', 'public');
 
-        $marca->update(["nome" => $request->input('nome'), "imagem" => $imagem_urn]);
+        $marca->fill($request->all());
+        $marca->imagem = $imagem_urn;
+
+        $marca->save();
 
         return response()->json($marca, 200);
     }
@@ -93,6 +110,8 @@ class MarcaController extends Controller
 
         $marca->delete();
 
-        return response()->json(['msg' => 'A marca foi removida com sucesso!'], 200);
+        return response()->json([
+            'msg' => 'A marca foi removida com sucesso!'
+        ], 200);
     }
 }
