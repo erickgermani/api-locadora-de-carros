@@ -19,6 +19,7 @@
                                         id="inputId"
                                         aria-describedby="idHelp"
                                         placeholder="ID"
+                                        v-model="busca.id"
                                     />
                                 </input-container-component>
                             </div>
@@ -35,6 +36,7 @@
                                         id="inputNome"
                                         aria-describedby="nomeHelp"
                                         placeholder="Nome da marca"
+                                        v-model="busca.nome"
                                     />
                                 </input-container-component>
                             </div>
@@ -45,6 +47,7 @@
                         <button
                             type="submit"
                             class="btn btn-primary btn-sm float-end"
+                            @click="pesquisar()"
                         >
                             Pesquisar
                         </button>
@@ -54,21 +57,55 @@
                 <!-- Listagem de marcas -->
                 <card-component titulo="Relação de marcas">
                     <template v-slot:conteudo
-                        ><table-component></table-component
+                        ><table-component
+                            :dados="marcas.data"
+                            :titulos="{
+                                id: { titulo: 'Id', tipo: 'texto' },
+                                nome: { titulo: 'Nome', tipo: 'texto' },
+                                imagem: { titulo: 'Logo', tipo: 'imagem' },
+                                created_at: {
+                                    titulo: 'Criado em',
+                                    tipo: 'data',
+                                },
+                            }"
+                        ></table-component
                     ></template>
-                    <template v-slot:rodape
-                        ><button
-                            type="submit"
-                            class="btn btn-primary btn-sm float-end"
-                            data-bs-toggle="modal"
-                            data-bs-target="#modalMarca"
-                        >
-                            Adicionar
-                        </button></template
-                    >
+                    <template v-slot:rodape>
+                        <div class="row">
+                            <div class="col-10">
+                                <paginate-component>
+                                    <li
+                                        v-for="(l, key) in marcas.links"
+                                        :key="key"
+                                        :class="
+                                            l.active
+                                                ? 'page-item active'
+                                                : 'page-item'
+                                        "
+                                        @click="paginacao(l)"
+                                    >
+                                        <a class="page-link" v-html="l.label">
+                                        </a>
+                                    </li>
+                                </paginate-component>
+                            </div>
+
+                            <div class="col">
+                                <button
+                                    type="submit"
+                                    class="btn btn-primary btn-sm float-end"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalMarca"
+                                >
+                                    Adicionar
+                                </button>
+                            </div>
+                        </div>
+                    </template>
                 </card-component>
             </div>
         </div>
+
         <modal-component id="modalMarca" titulo="Adicionar marca">
             <template v-slot:alertas>
                 <alert-component
@@ -142,10 +179,19 @@ export default {
     data() {
         return {
             urlBase: "http://localhost:8000/api/v1/marca",
+            urlPaginacao: "",
+            urlFiltro: "",
             nomeMarca: "",
             arquivoImagem: [],
             transacaoStatus: "",
             transacaoDetalhes: {},
+            marcas: {
+                data: [],
+            },
+            busca: {
+                id: "",
+                nome: "",
+            },
         };
     },
     computed: {
@@ -160,6 +206,58 @@ export default {
         },
     },
     methods: {
+        pesquisar() {
+            let filtro = "";
+
+            for (let chave in this.busca) {
+                const valor = this.busca[chave];
+
+                if (valor) {
+                    if (filtro.length > 0) filtro += ";";
+
+                    const operador =
+                        typeof valor === "string" ? ":like:" : ":=:";
+
+                    filtro += chave + operador + valor;
+                }
+            }
+
+            if (filtro) {
+                this.urlPaginacao = "page=1";
+                this.urlFiltro = "filtro=" + filtro;
+            } else this.urlFiltro = "";
+
+            this.carregarLista();
+        },
+        paginacao(l) {
+            console.log;
+            if (l.url) {
+                this.urlPaginacao = l.url.split("?").pop();
+                this.carregarLista();
+            }
+        },
+        carregarLista() {
+            const config = {
+                headers: {
+                    Accept: "application/json",
+                    Authorization: this.token,
+                },
+            };
+
+            const url =
+                this.urlBase + "?" + this.urlPaginacao + "&" + this.urlFiltro;
+
+            console.log(url);
+
+            axios
+                .get(url, config)
+                .then((res) => {
+                    this.marcas = res.data;
+                })
+                .catch((error) => {
+                    console.error(error);
+                });
+        },
         carregarImagem(e) {
             this.arquivoImagem = e.target.files;
         },
@@ -192,6 +290,9 @@ export default {
                     };
                 });
         },
+    },
+    mounted() {
+        this.carregarLista();
     },
 };
 </script>

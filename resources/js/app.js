@@ -13,8 +13,6 @@ import { createApp } from "vue";
  * to use in your application's views. An example is included for you.
  */
 
-const app = createApp({});
-
 import ExampleComponent from "./components/ExampleComponent.vue";
 import LoginComponent from "./components/Login.vue";
 import HomeComponent from "./components/Home.vue";
@@ -24,6 +22,9 @@ import TableComponent from "./components/Table.vue";
 import CardComponent from "./components/Card.vue";
 import ModalComponent from "./components/Modal.vue";
 import AlertComponent from "./components/Alert.vue";
+import PaginateComponent from "./components/Paginate.vue";
+
+const app = createApp({});
 
 app.component("example-component", ExampleComponent);
 app.component("login-component", LoginComponent);
@@ -34,6 +35,7 @@ app.component("table-component", TableComponent);
 app.component("card-component", CardComponent);
 app.component("modal-component", ModalComponent);
 app.component("alert-component", AlertComponent);
+app.component("paginate-component", PaginateComponent);
 
 /**
  * The following block of code may be used to automatically register your
