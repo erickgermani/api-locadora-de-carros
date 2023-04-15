@@ -6,6 +6,7 @@
                     <th scope="col" v-for="(t, key) in titulos" :key="key">
                         {{ t.titulo }}
                     </th>
+                    <th v-if="visualizar.visivel || atualizar || remover.visivel"></th>
                 </tr>
             </thead>
             <tbody>
@@ -25,6 +26,32 @@
                             />
                         </span>
                     </td>
+                    <td v-if="visualizar.visivel || atualizar || remover.visivel">
+                        <button
+                            v-if="visualizar.visivel"
+                            class="btn btn-outline-primary btn-sm"
+                            :data-bs-toggle="visualizar.dataBsToggle"
+                            :data-bs-target="visualizar.dataBsTarget"
+                            @click="setStore(obj)"
+                        >
+                            Visualizar
+                        </button>
+                        <button
+                            v-if="atualizar"
+                            class="btn btn-outline-primary btn-sm"
+                        >
+                            Atualizar
+                        </button>
+                        <button
+                            v-if="remover.visivel"
+                            class="btn btn-outline-danger btn-sm"
+                            :data-bs-toggle="remover.dataBsToggle"
+                            :data-bs-target="remover.dataBsTarget"
+                            @click="setStore(obj)"
+                        >
+                            Remover
+                        </button>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -33,7 +60,17 @@
 
 <script>
 export default {
-    props: ["dados", "titulos"],
+    props: ["dados", "titulos", "atualizar", "remover", "visualizar"],
+    methods: {
+        setStore(obj) {
+            this.$store.state.transacao = {
+                status: '',
+                mensagem: ''
+            };
+
+            this.$store.state.item = obj;
+        }
+    },
     computed: {
         dadosFiltrados() {
             const colunas = Object.keys(this.titulos);

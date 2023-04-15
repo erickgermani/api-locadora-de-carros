@@ -1,5 +1,8 @@
 <template>
     <div :class="estilo" role="alert">
+        {{  titulo }}
+
+        <hr>
         <span>{{ detalhes.mensagem }}</span>
 
         <template v-if="detalhes.dados">
@@ -20,7 +23,7 @@
 
 <script>
 export default {
-    props: ["tipo", "detalhes"],
+    props: ["titulo", "tipo", "detalhes"],
     computed: {
         estilo() {
             return `alert alert-${this.tipo}`;
