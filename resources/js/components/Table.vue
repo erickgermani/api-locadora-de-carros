@@ -6,7 +6,7 @@
                     <th scope="col" v-for="(t, key) in titulos" :key="key">
                         {{ t.titulo }}
                     </th>
-                    <th v-if="visualizar.visivel || atualizar || remover.visivel"></th>
+                    <th v-if="visualizar.visivel || atualizar.visivel || remover.visivel"></th>
                 </tr>
             </thead>
             <tbody>
@@ -16,7 +16,7 @@
                             {{ valor }}
                         </span>
                         <span v-else-if="titulos[chaveValor].tipo === 'data'">
-                            {{ valor }}
+                            {{ $filters.formataDataTempo(valor) }}
                         </span>
                         <span v-else-if="titulos[chaveValor].tipo === 'imagem'">
                             <img
@@ -26,7 +26,7 @@
                             />
                         </span>
                     </td>
-                    <td v-if="visualizar.visivel || atualizar || remover.visivel">
+                    <td v-if="visualizar.visivel || atualizar.visivel || remover.visivel">
                         <button
                             v-if="visualizar.visivel"
                             class="btn btn-outline-primary btn-sm"
@@ -37,8 +37,11 @@
                             Visualizar
                         </button>
                         <button
-                            v-if="atualizar"
+                            v-if="atualizar.visivel"
                             class="btn btn-outline-primary btn-sm"
+                            :data-bs-toggle="atualizar.dataBsToggle"
+                            :data-bs-target="atualizar.dataBsTarget"
+                            @click="setStore(obj)"
                         >
                             Atualizar
                         </button>
@@ -65,7 +68,8 @@ export default {
         setStore(obj) {
             this.$store.state.transacao = {
                 status: '',
-                mensagem: ''
+                mensagem: '',
+                dados: ''
             };
 
             this.$store.state.item = obj;

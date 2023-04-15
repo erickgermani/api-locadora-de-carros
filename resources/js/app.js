@@ -1,7 +1,7 @@
 import "./bootstrap";
 import { createApp } from "vue";
 
-import Vuex from 'vuex';
+import Vuex from "vuex";
 
 import ExampleComponent from "./components/ExampleComponent.vue";
 import LoginComponent from "./components/Login.vue";
@@ -22,13 +22,29 @@ const store = new Vuex.Store({
     state: {
         item: {},
         transacao: {
-            status: '',
-            mensagem: ''
-        }
-    }
+            status: "",
+            mensagem: "",
+            dados: "",
+        },
+    },
 });
 
 app.use(store);
+
+app.config.globalProperties.$filters = {
+    formataDataTempo(d)  {
+        if (!d) return "";
+
+        d = d.split("T");
+
+        let data = d[0];
+        let tempo = d[1].split('.').shift();
+
+        data = data.split('-').reverse().join('/');
+
+        return `${data} ${tempo}`;
+    }
+}
 
 app.component("example-component", ExampleComponent);
 app.component("login-component", LoginComponent);
